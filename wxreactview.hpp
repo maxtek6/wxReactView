@@ -1,0 +1,26 @@
+#include <wx/wx.h>
+#include <wx/webview.h>
+
+class wxReactController
+{
+
+};
+
+class wxReactView : public wxWebView
+{
+public:
+    static wxReactView *New(wxWindow *parent,
+                            wxWindowID id,
+                            wxReactController *controller,
+                            const wxString &url = wxASCII_STR(wxWebViewDefaultURLStr),
+                            const wxPoint &pos = wxDefaultPosition,
+                            const wxSize &size = wxDefaultSize,
+                            long style = 0,
+                            const wxString &name = wxASCII_STR(wxWebViewNameStr));
+private:
+    void Initialize(wxReactController *controller);
+    void OnCreated(wxWebViewEvent &event);
+    void OnMessage(wxWebViewEvent &event);
+    static wxString GetWebviewBackend();
+    wxReactController *m_reactController = nullptr;
+};
