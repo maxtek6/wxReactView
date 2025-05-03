@@ -32,10 +32,12 @@ void wxReactView::OnCreated(wxWebViewEvent &event)
     if (webViewHandle)
     {
         HRESULT hr = webViewHandle->SetVirtualHostNameToFolderMapping(
-            L"wxreact", 
-            L"webview", 
+            L"wxreactview.runtime", 
+            m_reactController->GetBuildDirectory().wc_str(), 
             COREWEBVIEW2_HOST_RESOURCE_ACCESS_KIND_ALLOW);
     }
+    LoadURL("https://wxreactview.runtime/index.html");
+    AddScriptMessageHandler("wxreactview");
 }
 
 wxString wxReactView::GetWebviewBackend()

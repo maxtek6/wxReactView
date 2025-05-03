@@ -3,7 +3,17 @@
 
 class wxReactController
 {
+public:
+    wxReactController(const wxString &buildDirectory);
+    virtual ~wxReactController() = default;
 
+    wxString GetBuildDirectory() const;
+    void SetBuildDirectory(const wxString &buildDirectory);
+
+    virtual void OnMessage(wxString &message) = 0;
+    void Notify(wxString &message);
+private:
+    wxString m_buildDirectory;
 };
 
 class wxReactView : public wxWebView
