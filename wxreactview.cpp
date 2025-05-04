@@ -7,7 +7,7 @@
 #endif
 wxReactView *wxReactView::New(wxWindow *parent,
     wxWindowID id,
-    wxReactController *controller,
+    const wxString& directoryMapping,
     const wxString &url,
     const wxPoint &pos,
     const wxSize &size,
@@ -15,13 +15,13 @@ wxReactView *wxReactView::New(wxWindow *parent,
     const wxString &name)
 {
     std::unique_ptr<wxReactView> reactView(reinterpret_cast<wxReactView*>(wxWebView::New(parent, id, url, pos, size, wxReactView::GetWebviewBackend(), style, name)));
-    reactView->Initialize(controller);
+    reactView->Initialize(directoryMapping);
     return reactView.release();
 }
 
-void wxReactView::Initialize(wxReactController *controller)
+void wxReactView::Initialize(const wxString& directoryMapping)
 {
-    m_reactController = controller;
+    m_directoryMapping = directoryMapping;
     Bind(wxEVT_WEBVIEW_CREATED, &wxReactView::OnCreated, this);
 }
 
@@ -33,7 +33,7 @@ void wxReactView::OnCreated(wxWebViewEvent &event)
     {
         HRESULT hr = webViewHandle->SetVirtualHostNameToFolderMapping(
             L"wxreactview.runtime", 
-            m_reactController->GetBuildDirectory().wc_str(), 
+            m_directoryMapping.wc_str(), 
             COREWEBVIEW2_HOST_RESOURCE_ACCESS_KIND_ALLOW);
     }
     LoadURL("https://wxreactview.runtime/index.html");
