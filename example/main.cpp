@@ -1,6 +1,7 @@
 #include <wxreactview.hpp>
 #include <wx/filename.h>
 #include <wx/stdpaths.h>
+#include <yyjson.h>
 
 class JsonReactViewHandler : public wxReactViewHandler
 {
@@ -21,10 +22,10 @@ public:
                  const wxSize &size = wxDefaultSize,
                  long style = wxDEFAULT_FRAME_STYLE | wxTAB_TRAVERSAL) : wxFrame(nullptr, wxID_ANY, title, pos, size, style)
     {
-        wxString exePath = wxFileName(wxStandardPaths::Get().GetExecutablePath()).GetPath();
-        exePath.Append("\\dist");
+        wxString directoryMapping = wxFileName(wxStandardPaths::Get().GetExecutablePath()).GetPath();
+        directoryMapping.Append("\\dist");
         m_webView = wxReactView::NewWebView(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0, "wxReactView");
-        m_reactView = std::make_unique<wxReactView>(m_webView, exePath);
+        m_reactView = std::make_unique<wxReactView>(m_webView, directoryMapping);
         m_reactView->RegisterHandler(hander);
     }
     virtual ~wxReactFrame() override = default;
