@@ -25,3 +25,5 @@ FetchContent_MakeAvailable(wxWidgets)
 add_library(wxreactview STATIC ${CMAKE_CURRENT_SOURCE_DIR}/wxreactview.cpp)
 target_include_directories(wxreactview PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${WEBVIEW2_INCLUDE})
 target_link_libraries(wxreactview PUBLIC wx::core wx::base wx::webview)
+
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/example)

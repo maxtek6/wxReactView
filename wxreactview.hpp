@@ -1,33 +1,40 @@
 #include <wx/wx.h>
 #include <wx/webview.h>
 
-class wxReactViewHandler
-{
-public:
-    virtual ~wxReactViewHandler() = default;
-    virtual void HandleMessage(wxReactView *source, const wxString& message) = 0;
-};
+class wxReactViewHandler;
 
-class wxReactView : public wxWebView
+class wxReactView
 {
 public:
-    static wxReactView *New(wxWindow *parent,
+    static wxWebView *NewWebView(wxWindow *parent,
                             wxWindowID id,
-                            const wxString& directoryMapping,
-                            const wxString &url = wxASCII_STR(wxWebViewDefaultURLStr),
                             const wxPoint &pos = wxDefaultPosition,
                             const wxSize &size = wxDefaultSize,
                             long style = 0,
                             const wxString &name = wxASCII_STR(wxWebViewNameStr));
 
+    
+    wxReactView(wxWebView *webView, 
+                const wxString& directoryMapping, 
+                const wxString& indexPath = "index.html");
+    
+    void RegisterHandler(wxReactViewHandler* handler);
+
     void Send(const wxString& message);
 
-    void RegisterHandler(wxReactViewHandler *handler);
-
 private:
-    void Initialize(const wxString& directoryMapping);
-    void OnCreated(wxWebViewEvent &event);
-    void OnMessage(wxWebViewEvent &event);
     static wxString GetWebviewBackend();
+    void OnWebViewCreated(wxWebViewEvent& event);
+    void OnWebViewScriptMessageReceived(wxWebViewEvent& event);
+    wxWebView* m_webView;
     wxString m_directoryMapping;
+    wxString m_indexPath;
+    wxReactViewHandler* m_handler = nullptr;
+};
+
+class wxReactViewHandler
+{
+public:
+    virtual ~wxReactViewHandler() = default;
+    virtual void HandleMessage(wxReactView *source, const wxString& message) = 0;
 };
