@@ -15,15 +15,15 @@ FetchContent_Declare(
 set(wxBUILD_SHARED OFF CACHE BOOL "" FORCE)
 set(wxBUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(wxBUILD_SAMPLES OFF CACHE BOOL "" FORCE)
-if(WIN32)
-    set(wxUSE_WEBVIEW_EDGE ON CACHE BOOL "" FORCE)
-    set(wxUSE_WEBVIEW_EDGE_STATIC ON CACHE BOOL "" FORCE)
-    set(WEBVIEW2_INCLUDE "${WEBVIEW2_PACKAGE_DIR}/build/native/include")
-endif()
+set(wxUSE_WEBVIEW_CHROMIUM ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(wxWidgets)
 
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CEF_ROOT}/cmake)
+find_package(CEF REQUIRED)
+
 add_library(wxreactview STATIC ${CMAKE_CURRENT_SOURCE_DIR}/wxreactview.cpp)
-target_include_directories(wxreactview PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${WEBVIEW2_INCLUDE})
-target_link_libraries(wxreactview PUBLIC wx::core wx::base wx::webview)
+target_include_directories(wxreactview PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_directories(wxreactview PUBLIC ${CEF_ROOT}/Release)
+target_link_libraries(wxreactview PUBLIC wx::core wx::base wx::webview ${CEF_STANDARD_LIBS})
 
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/example)

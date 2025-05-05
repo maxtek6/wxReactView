@@ -26,3 +26,11 @@ add_custom_command(
 add_custom_target(copy_frontend ALL
     DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/frontend/dist/index.html
 )
+
+add_custom_command( 
+    TARGET example 
+    POST_BUILD 
+    COMMAND ${CMAKE_COMMAND} -E copy_directory ${CEF_ROOT}/Release $<TARGET_FILE_DIR:example> 
+    COMMAND ${CMAKE_COMMAND} -E copy_directory ${CEF_ROOT}/Resources $<TARGET_FILE_DIR:example> 
+    COMMENT "Copying CEF resources..." 
+    ) 

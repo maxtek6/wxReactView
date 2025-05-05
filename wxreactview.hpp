@@ -1,5 +1,7 @@
 #include <wx/wx.h>
+#include <wx/filename.h>
 #include <wx/webview.h>
+#include <wx/webview_chromium.h>
 
 class wxReactViewHandler;
 

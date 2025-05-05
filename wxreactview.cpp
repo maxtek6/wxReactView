@@ -1,10 +1,4 @@
 #include <wxreactview.hpp>
-#ifdef __WXMSW__
-#include <wx/msw/webview_edge.h>
-#include <WebView2.h>
-#else
-
-#endif
 
 wxWebView *wxReactView::NewWebView(wxWindow *parent,
                                    wxWindowID id,
@@ -41,7 +35,7 @@ wxString wxReactView::GetWebviewBackend()
 {
     const char *backend;
 #ifdef __WXMSW__
-    backend = wxWebViewBackendEdge;
+    backend = wxWebViewBackendChromium;
 #else
     backend = wxWebViewBackendWebKit;
 #endif
@@ -50,23 +44,17 @@ wxString wxReactView::GetWebviewBackend()
 
 void wxReactView::OnWebViewCreated(wxWebViewEvent &event)
 {
-    const wxString virtual_host("wxreactview.runtime");
-    const wxString url = wxString::Format("https://%s/%s", virtual_host, m_indexPath);
-    ICoreWebView2_3 * const handle = static_cast<ICoreWebView2_3 *>(m_webView->GetNativeBackend());
-    if(handle)
+    if(!m_webView)
     {
-        HRESULT hr = handle->SetVirtualHostNameToFolderMapping(
-            virtual_host.wc_str(),
-            m_directoryMapping.wc_str(),
-            COREWEBVIEW2_HOST_RESOURCE_ACCESS_KIND_ALLOW);
-        if(SUCCEEDED(hr))
-        {
-            m_webView->LoadURL(url);
-            m_webView->AddScriptMessageHandler("wxreactviewipc");
-            m_webView->Bind(wxEVT_WEBVIEW_SCRIPT_MESSAGE_RECEIVED,
-                &wxReactView::OnWebViewScriptMessageReceived, this);
-        }
-    }    
+        wxLogError(wxString::Format("Failed to create webview: %s", event.GetString()));
+    }
+    if(!m_webView->GetNativeBackend())
+    {
+        wxLogError(wxString::Format("Failed to get native backend: %s", event.GetString()));
+        return;
+    }
+    reinterpret_cast<wxWebViewChromium*>(m_webView->GetNativeBackend())->SetRoot(wxFileName(m_directoryMapping));
+    m_webView->LoadURL("file://index.html");
 }
 
 void wxReactView::OnWebViewScriptMessageReceived(wxWebViewEvent &event)

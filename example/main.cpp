@@ -22,6 +22,11 @@ public:
                  const wxSize &size = wxDefaultSize,
                  long style = wxDEFAULT_FRAME_STYLE | wxTAB_TRAVERSAL) : wxFrame(nullptr, wxID_ANY, title, pos, size, style)
     {
+        if(!wxWebView::IsBackendAvailable(wxWebViewBackendChromium))
+        {
+            wxLogError("wxWebView backend is not available.");
+            return;
+        }
         wxString directoryMapping = wxFileName(wxStandardPaths::Get().GetExecutablePath()).GetPath();
         directoryMapping.Append("\\dist");
         m_webView = wxReactView::NewWebView(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0, "wxReactView");
