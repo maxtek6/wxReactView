@@ -2,6 +2,8 @@
 #include <wx/filename.h>
 #include <wx/webview.h>
 #include <wx/webview_chromium.h>
+#include "include/cef_app.h"
+
 
 class wxReactViewHandler;
 
@@ -40,3 +42,4 @@ public:
     virtual ~wxReactViewHandler() = default;
     virtual void HandleMessage(wxReactView *source, const wxString& message) = 0;
 };
+

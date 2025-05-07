@@ -22,7 +22,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CEF_ROOT}/cmake)
 find_package(CEF REQUIRED)
 
 add_library(wxreactview STATIC ${CMAKE_CURRENT_SOURCE_DIR}/wxreactview.cpp)
-target_include_directories(wxreactview PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(wxreactview PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${CEF_ROOT})
 target_link_directories(wxreactview PUBLIC ${CEF_ROOT}/Release)
 target_link_libraries(wxreactview PUBLIC wx::core wx::base wx::webview ${CEF_STANDARD_LIBS})
 

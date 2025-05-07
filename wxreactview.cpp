@@ -44,17 +44,17 @@ wxString wxReactView::GetWebviewBackend()
 
 void wxReactView::OnWebViewCreated(wxWebViewEvent &event)
 {
+    std::cerr << wxString::Format("WebView created: %s", event.GetString()) << std::endl;
     if(!m_webView)
     {
-        wxLogError(wxString::Format("Failed to create webview: %s", event.GetString()));
+        std::cerr << wxString::Format("Failed to create webview: %s", event.GetString()) << std::endl;
     }
-    if(!m_webView->GetNativeBackend())
-    {
-        wxLogError(wxString::Format("Failed to get native backend: %s", event.GetString()));
-        return;
-    }
-    reinterpret_cast<wxWebViewChromium*>(m_webView->GetNativeBackend())->SetRoot(wxFileName(m_directoryMapping));
-    m_webView->LoadURL("file://index.html");
+    std::cerr << "here" << std::endl;
+    wxWebViewChromium *handle = dynamic_cast<wxWebViewChromium*>(m_webView);
+    dynamic_cast<wxWebViewChromium*>(m_webView)->SetRoot(wxFileName(m_directoryMapping));
+    std::cerr << wxString::Format("Set root: %s", m_directoryMapping) << std::endl;
+    handle->SetPageText("<html><body><h1>Hello World</h1></body></html>");
+    std::cerr << wxString::Format("Load URL: %s", m_indexPath) << std::endl;
 }
 
 void wxReactView::OnWebViewScriptMessageReceived(wxWebViewEvent &event)

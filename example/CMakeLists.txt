@@ -7,7 +7,7 @@ set(YYJSON_BUILD_TESTS OFF CACHE BOOL "" FORCE)  # disable tests
 set(YYJSON_BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)  # static linking
 FetchContent_MakeAvailable(yyjson)
 
-add_executable(example main.cpp)
+add_executable(example WIN32 main.cpp)
 target_link_libraries(example wxreactview yyjson)
 
 add_custom_command(
