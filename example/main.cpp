@@ -14,20 +14,11 @@ public:
     IMPLEMENT_REFCOUNTING(MyCefApp);
 };
 
-class JsonReactViewHandler : public wxReactViewHandler
-{
-public:
-    JsonReactViewHandler() = default;
-    virtual ~JsonReactViewHandler() override = default;
-    virtual void HandleMessage(wxReactView *source, const wxString &message) override
-    {
-    }
-};
 
 class wxReactFrame : public wxFrame
 {
 public:
-    wxReactFrame(JsonReactViewHandler *handler, const wxString &title,
+    wxReactFrame(const wxString &title,
                  const wxPoint &pos = wxDefaultPosition,
                  const wxSize &size = wxDefaultSize,
                  long style = wxDEFAULT_FRAME_STYLE | wxTAB_TRAVERSAL) : wxFrame(nullptr, wxID_ANY, title, pos, size, style)
@@ -39,14 +30,12 @@ public:
         }
         wxString directoryMapping = wxFileName(wxStandardPaths::Get().GetExecutablePath()).GetPath();
         directoryMapping.Append("\\dist");
-        m_webView = wxReactView::NewWebView(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0, "wxReactView");
-        m_reactView = std::make_unique<wxReactView>(m_webView, directoryMapping);
-        m_reactView->RegisterHandler(handler);
+        m_reactView = std::make_unique<wxReactView>(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0, "wxReactView");
+        m_reactView->Initialize(directoryMapping, "index.html");
     }
     virtual ~wxReactFrame() override = default;
 
 private:
-    wxWebView *m_webView = nullptr;
     std::unique_ptr<wxReactView> m_reactView = nullptr;
 };
 
@@ -55,7 +44,7 @@ class MyApp : public wxApp
 public:
     virtual bool OnInit() override
     {
-        wxReactFrame *frame = new wxReactFrame(new JsonReactViewHandler(), "wxReactView Example",
+        wxReactFrame *frame = new wxReactFrame("wxReactView Example",
                                                wxPoint(50, 50), wxSize(800, 600), wxDEFAULT_FRAME_STYLE | wxTAB_TRAVERSAL);
         frame->Show();
 

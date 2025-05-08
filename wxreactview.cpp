@@ -1,67 +1,45 @@
 #include <wxreactview.hpp>
 
-wxWebView *wxReactView::NewWebView(wxWindow *parent,
-                                   wxWindowID id,
-                                   const wxPoint &pos,
-                                   const wxSize &size,
-                                   long style,
-                                   const wxString &name)
-{
-    return wxWebView::New(parent, id, "", pos, size, wxReactView::GetWebviewBackend(), style, name);
-}
+#include <wx/sstream.h>
+#include <wx/filesys.h>
 
-wxReactView::wxReactView(wxWebView *webView,
-                         const wxString &directoryMapping,
-                         const wxString &indexPath)
-    : m_webView(webView), m_directoryMapping(directoryMapping), m_indexPath(indexPath)
+class wxReactViewHandler : public wxWebViewHandler
 {
-    m_webView->Bind(wxEVT_WEBVIEW_CREATED, &wxReactView::OnWebViewCreated, this);
-}
-
-void wxReactView::RegisterHandler(wxReactViewHandler *handler)
-{
-    m_handler = handler;
-}
-
-void wxReactView::Send(const wxString &message)
-{
-    if (m_handler)
+public:
+    wxReactViewHandler(const wxString &directoryMapping, const wxString &indexPath) : wxWebViewHandler("wxreactview"), m_directoryMapping(directoryMapping), m_indexPath(indexPath) {}
+    virtual ~wxReactViewHandler() {}
+    wxFSFile* GetFile(const wxString &uri) override
     {
-        m_handler->HandleMessage(this, message);
+        const wxString html = "<html><body><h1>Hello, wxReactView!</h1></body></html>";
+        return new wxFSFile(new wxStringInputStream(html), uri, wxString("text/html"),"", wxDateTime::Now());
     }
+private:
+    wxString m_directoryMapping;
+    wxString m_indexPath;
+};
+
+wxReactView::wxReactView(wxWindow *parent,
+                         wxWindowID id,
+                         const wxPoint &pos,
+                         const wxSize &size,
+                         long style,
+                         const wxString &name)
+{
+    m_webView.reset(dynamic_cast<wxWebViewChromium *>(wxWebView::New(parent, id, "", pos, size, wxWebViewBackendChromium, style, name)));
 }
 
-wxString wxReactView::GetWebviewBackend()
+void wxReactView::Initialize(const wxString &directoryMapping,
+                             const wxString &indexPath)
 {
-    const char *backend;
-#ifdef __WXMSW__
-    backend = wxWebViewBackendChromium;
-#else
-    backend = wxWebViewBackendWebKit;
-#endif
-    return wxString(backend, wxConvUTF8);
+    m_directoryMapping = directoryMapping;
+    m_indexPath = indexPath;
+
+    m_webView->Bind(wxEVT_WEBVIEW_CREATED, &wxReactView::OnWebViewCreated, this);
 }
 
 void wxReactView::OnWebViewCreated(wxWebViewEvent &event)
 {
-    std::cerr << wxString::Format("WebView created: %s", event.GetString()) << std::endl;
-    if(!m_webView)
-    {
-        std::cerr << wxString::Format("Failed to create webview: %s", event.GetString()) << std::endl;
-    }
-    std::cerr << "here" << std::endl;
-    wxWebViewChromium *handle = dynamic_cast<wxWebViewChromium*>(m_webView);
-    dynamic_cast<wxWebViewChromium*>(m_webView)->SetRoot(wxFileName(m_directoryMapping));
-    std::cerr << wxString::Format("Set root: %s", m_directoryMapping) << std::endl;
-    handle->SetPageText("<html><body><h1>Hello World</h1></body></html>");
-    std::cerr << wxString::Format("Load URL: %s", m_indexPath) << std::endl;
-}
-
-void wxReactView::OnWebViewScriptMessageReceived(wxWebViewEvent &event)
-{
-    const wxString message = event.GetString();
-    if (m_handler)
-    {
-        m_handler->HandleMessage(this, message);
-    }
+    wxSharedPtr<wxWebViewHandler> handler(new wxReactViewHandler(m_directoryMapping, m_indexPath));
+    m_webView->RegisterHandler(handler);
+    m_webView->LoadURL(wxString::Format("wxreactview://%s", m_indexPath));
 }
