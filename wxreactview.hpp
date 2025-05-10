@@ -24,7 +24,7 @@ private:
     static wxString GetWebviewBackend();
     void OnWebViewCreated(wxWebViewEvent& event);
     void OnWebViewScriptMessageReceived(wxWebViewEvent& event);
-    std::unique_ptr<wxWebViewChromium> m_webView;
+    std::unique_ptr<wxWebView> m_webView;
     wxString m_directoryMapping;
     wxString m_indexPath;
 };

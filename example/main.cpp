@@ -44,6 +44,9 @@ class MyApp : public wxApp
 public:
     virtual bool OnInit() override
     {
+        AllocConsole();
+        freopen("CONOUT$", "w", stdout);
+        freopen("CONOUT$", "w", stderr);
         wxReactFrame *frame = new wxReactFrame("wxReactView Example",
                                                wxPoint(50, 50), wxSize(800, 600), wxDEFAULT_FRAME_STYLE | wxTAB_TRAVERSAL);
         frame->Show();
@@ -53,6 +56,7 @@ public:
 
     virtual int OnExit() override
     {
+        FreeConsole();
         return 0;
     }
 };

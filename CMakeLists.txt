@@ -9,8 +9,8 @@ include(FetchContent)
 
 FetchContent_Declare(
   wxWidgets
-  GIT_REPOSITORY https://github.com/wxWidgets/wxWidgets.git
-  GIT_TAG master  # or latest stable
+  GIT_REPOSITORY https://github.com/maxtek6/wxWidgets.git
+  GIT_TAG feature/chromium-start-request
 )
 set(wxBUILD_SHARED OFF CACHE BOOL "" FORCE)
 set(wxBUILD_TESTS OFF CACHE BOOL "" FORCE)
