@@ -1,9 +1,6 @@
 #include <wx/wx.h>
 #include <wx/filename.h>
 #include <wx/webview.h>
-#include <wx/webview_chromium.h>
-#include "include/cef_app.h"
-
 
 class wxReactView
 {
@@ -15,8 +12,7 @@ public:
                 long style = 0,
                 const wxString &name = wxASCII_STR(wxWebViewNameStr));
     
-    void Initialize(const wxString& directoryMapping,
-                    const wxString& indexPath);
+    void Initialize(const wxString& directoryMapping);
 
     void Send(const wxString& message);
 
@@ -29,3 +25,11 @@ private:
     wxString m_indexPath;
 };
 
+class wxReactApp : public wxApp
+{
+public:
+    virtual bool OnInit() override final;
+    virtual bool OnReady() = 0;
+private:
+    static bool StartProcess();
+};
