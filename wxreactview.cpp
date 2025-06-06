@@ -43,6 +43,8 @@ public:
 };
 #endif
 
+#include <iostream>
+
 static wxString normalizePath(const wxString &path)
 {
     wxString normalizedPath = path;
@@ -181,8 +183,8 @@ bool wxReactApp::StartProcess()
     result = true;
     #else
     CefMainArgs mainArgs;
-    CefRefPtr<ReactCefApp> app = new ReactCefApp();
-    result = CefExecuteProcess(mainArgs, app, nullptr) == CEF_SUCCESS;
+    CefRefPtr<ReactCefApp> app = new ReactCefApp;
+    result = CefExecuteProcess(mainArgs, app, nullptr);
     #endif
     return result;
 }
