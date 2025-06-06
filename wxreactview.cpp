@@ -30,6 +30,17 @@
 
 #ifndef __WXMSW__
 #include <wx/webview_chromium.h>
+#include "include/cef_app.h"
+#include "include/cef_client.h"
+class ReactCefApp : public CefApp, public CefBrowserProcessHandler
+{
+public:
+    CefRefPtr<CefBrowserProcessHandler> GetBrowserProcessHandler() override
+    {
+        return this;
+    }
+    IMPLEMENT_REFCOUNTING(ReactCefApp);
+};
 #endif
 
 static wxString normalizePath(const wxString &path)
@@ -165,9 +176,15 @@ void wxReactHandler::RegisterEndpoint(const wxString &endpoint, const wxRequestH
 
 bool wxReactApp::StartProcess()
 {
-    // This function can be used to start the process if needed.
-    // For example, you might want to initialize some resources or set up IPC.
-    return true;
+    bool result;
+    #ifdef __WXMSW__
+    result = true;
+    #else
+    CefMainArgs mainArgs;
+    CefRefPtr<ReactCefApp> app = new ReactCefApp();
+    result = CefExecuteProcess(mainArgs, app, nullptr) == CEF_SUCCESS;
+    #endif
+    return result;
 }
 
 bool wxReactApp::OnInit()
