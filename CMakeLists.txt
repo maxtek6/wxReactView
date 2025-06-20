@@ -5,6 +5,8 @@ project(wxreactview)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+option(WXREACTVIEW_EXAMPLE "Build wxReactView example" OFF)
+
 include(FetchContent)
 
 FetchContent_Declare(
@@ -91,4 +93,6 @@ function(wxreactview_add_executable TARGET_NAME)
     endif()
 endfunction()
 
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/example)
+if(WXREACTVIEW_EXAMPLE)
+    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/example)
+endif()
