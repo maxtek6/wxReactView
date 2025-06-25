@@ -27,6 +27,9 @@
 #include <wx/filename.h>
 #include <wx/webview.h>
 
+#include <condition_variable>
+#include <shared_mutex>
+
 using wxRequestHandler = std::function<void(const wxWebViewHandlerRequest &, wxSharedPtr<wxWebViewHandlerResponse>)>;
 
 class wxReactContent
@@ -76,11 +79,17 @@ public:
                  long style = 0,
                  const wxString &name = wxASCII_STR(wxWebViewNameStr));
 
-    void Initialize(wxReactHandler *handler, const wxString &indexPage = "index.html");
+    void Initialize(
+        wxReactHandler *handler, 
+        const std::function<void(wxWebView*)>& onCreate = std::function<void(wxWebView*)>(),
+        const wxString &indexPage = "index.html");
 
-    wxWebView* GetWebView() const { return m_webView.get(); }
+    wxWebView* GetWebView() const;
 
 private:
+    mutable bool m_ready;
+    mutable std::shared_timed_mutex m_mutex;
+    mutable std::condition_variable_any m_readyCondition;
     std::unique_ptr<wxWebView> m_webView;
     wxString m_indexPage;
     wxSharedPtr<wxWebViewHandler> m_handler;
