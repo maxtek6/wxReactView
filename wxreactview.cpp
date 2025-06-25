@@ -135,7 +135,6 @@ wxReactHandler::wxReactHandler(const wxSharedPtr<wxReactArchive> &archive)
 void wxReactHandler::StartRequest(const wxWebViewHandlerRequest &request,
                                   wxSharedPtr<wxWebViewHandlerResponse> response)
 {
-    std::cerr << "Handling request for URI: " << request.GetURI() << std::endl;
     const wxURI wxUri(request.GetURI());
     const wxString &path = normalizePath(wxUri.GetPath());
     if (path.StartsWith("/api/"))
@@ -156,14 +155,12 @@ void wxReactHandler::StartRequest(const wxWebViewHandlerRequest &request,
         auto content = m_archive->LoadContent(path);
         if (content)
         {
-            std::cerr << "Loaded content for path: " << path << std::endl;
             response->SetStatus(200);
             response->SetContentType(content->GetContentType());
             response->Finish(content->GetContent());
         }
         else
         {
-            std::cerr << "Content not found for path: " << path << std::endl;
             response->SetStatus(404);
             response->FinishWithError();
         }
@@ -194,7 +191,7 @@ bool wxReactApp::OnInit()
     return StartProcess() && OnReady();
 }
 
-wxReactView::wxReactView(wxWindow *parent, wxWindowID id, const wxPoint &pos, const wxSize &size, long style, const wxString &name)
+wxReactView::wxReactView(wxWindow *parent, wxWindowID id, const wxPoint &pos, const wxSize &size, long style, const wxString &name) : m_ready(false)
 {
 #ifdef __WXMSW__
     const wxString backend(wxWebViewBackendEdge);
@@ -204,17 +201,31 @@ wxReactView::wxReactView(wxWindow *parent, wxWindowID id, const wxPoint &pos, co
     m_webView.reset(wxWebView::New(parent, id, "", pos, size, backend, style, name));
 }
 
-void wxReactView::Initialize(wxReactHandler *handler, const wxString &indexPage)
+void wxReactView::Initialize(wxReactHandler *handler, const std::function<void(wxWebView*)>& onCreate, const wxString &indexPage)
 {
-    std::cerr << "Initializing wxReactView with handler and index page: " << indexPage << std::endl;
     m_handler = wxSharedPtr<wxWebViewHandler>(handler);
     m_indexPage = indexPage;
     m_webView->Bind(
         wxEVT_WEBVIEW_CREATED,
-        [this](wxWebViewEvent &event)
+        [&](wxWebViewEvent &event)
         {
-            std::cerr << "WebView created, registering handler and loading index page." << std::endl;
             m_webView->RegisterHandler(m_handler);
             m_webView->LoadURL(wxString::Format("https://wxreactview.ipc/%s", m_indexPage));
+            m_ready = true;
+            m_readyCondition.notify_all();
+            if (onCreate)
+            {
+                onCreate(m_webView.get());
+            }
         });
+}
+
+wxWebView* wxReactView::GetWebView() const
+{
+    std::shared_lock<std::shared_timed_mutex> lock(m_mutex);
+    if (!m_ready)
+    {
+        m_readyCondition.wait(lock, [this] { return m_ready; });
+    }
+    return m_webView.get();
 }
