@@ -23,76 +23,124 @@
 #ifndef WXREACTVIEW_HPP
 #define WXREACTVIEW_HPP
 
+/**
+ * @file wxreactview.hpp
+ * @brief wxReactView API header file
+ * @author John R. Patek Sr.
+ */
+
 #include <wx/wx.h>
 #include <wx/filename.h>
 #include <wx/webview.h>
 
-#include <condition_variable>
-#include <shared_mutex>
-
+/**
+ * @typedef wxRequestHandler
+ *
+ * @brief A function type that handles HTTP requests in a wxWebView.
+ */
 using wxRequestHandler = std::function<void(const wxWebViewHandlerRequest &, wxSharedPtr<wxWebViewHandlerResponse>)>;
 
+/**
+ * @class wxReactContent
+ *
+ * @brief abstract class representing static content in a wxReact archive.
+ */
 class wxReactContent
 {
 public:
-    virtual ~wxReactContent() = default;
+    /**
+     * @brief Get the content type of the static content.
+     * @return The content MIME type as a wxString.
+     */
     virtual wxString GetContentType() const = 0;
+
+    /**
+     * @brief Get the response data for static content.
+     * @return Shared pointer to wxWebViewHandlerResponseData containing
+     * the content.
+     */
     virtual wxSharedPtr<wxWebViewHandlerResponseData> GetContent() = 0;
 };
 
+/**
+ * @class wxReactArchive
+ *
+ * @brief abstract class representing a collection of static content.
+ */
 class wxReactArchive
 {
 public:
+    /**
+     * @brief create a wxReactArchive instance from a Hyperpage database.
+     * @param dbPath The path to the database file.
+     */
     static wxSharedPtr<wxReactArchive> CreateHyperpageArchive(const wxString &dbPath);
+
+    /**
+     * @brief load static content from a specified path.
+     * @param path The path used to identify the archived content to be
+     * loaded.
+     */
     virtual wxSharedPtr<wxReactContent> LoadContent(const wxString &path) = 0;
 };
 
-class wxReactHandler : public wxWebViewHandler
-{
-public:
-    wxReactHandler(const wxSharedPtr<wxReactArchive> &archive);
-    virtual ~wxReactHandler() = default;
-    void StartRequest(const wxWebViewHandlerRequest &request,
-                      wxSharedPtr<wxWebViewHandlerResponse> response) override final;
-    void RegisterEndpoint(const wxString &endpoint, const wxRequestHandler &handler);
-private:
-    wxSharedPtr<wxReactArchive> m_archive;
-    std::unordered_map<wxString, wxRequestHandler> m_requestHandlers;
-};
-
-class wxReactApp : public wxApp
-{
-public:
-    virtual bool OnInit() override final;
-    virtual bool OnReady() = 0;
-
-private:
-    static bool StartProcess();
-};
-
+/**
+ * @class wxReactView
+ *
+ * @brief Pairs a wxWebView with a wxReactArchive to display static
+ * content and handle HTTP requests.
+ */
 class wxReactView
 {
 public:
-    wxReactView(wxWindow * parent, wxWindowID id,
-                 const wxPoint &pos = wxDefaultPosition,
-                 const wxSize &size = wxDefaultSize,
-                 long style = 0,
-                 const wxString &name = wxASCII_STR(wxWebViewNameStr));
+    /**
+     * @brief Constructor for wxReactView.
+     * @param archive The wxReactArchive containing static content.
+     * @param indexPage The initial page to load in the web view, defaults
+     * to "index.html".
+     */
+    wxReactView(const wxSharedPtr<wxReactArchive> &archive, const wxString &indexPage = "index.html");
 
-    void Initialize(
-        wxReactHandler *handler, 
-        const std::function<void(wxWebView*)>& onCreate = std::function<void(wxWebView*)>(),
-        const wxString &indexPage = "index.html");
+    /**
+     * @brief bind a wxWebView to this wxReactView.
+     * @param webView The wxWebView instance to bind.
+     */
+    void BindWebView(wxWebView *webView);
 
-    wxWebView* GetWebView() const;
+    /**
+     * @brief Register an endpoint to serve over HTTP.
+     * @param endpoint The endpoint path to register.
+     * @param handler The request handler function to call when the endpoint
+     * is accessed.
+     */
+    void RegisterEndpoint(const wxString &endpoint, const wxRequestHandler &handler);
 
 private:
-    mutable bool m_ready;
-    mutable std::shared_timed_mutex m_mutex;
-    mutable std::condition_variable_any m_readyCondition;
-    std::unique_ptr<wxWebView> m_webView;
+    wxSharedPtr<wxReactArchive> m_archive;
     wxString m_indexPage;
     wxSharedPtr<wxWebViewHandler> m_handler;
+};
+
+/**
+ * @class wxReactHandler
+ *
+ * @brief extends wxApp
+ */
+class wxReactApp : public wxApp
+{
+public:
+    /// @private
+    virtual bool OnInit() override final;
+    
+    /**
+     * @brief Starting point for the wxReact application.
+     * @return true if the application started successfully, false otherwise.
+     */
+    virtual bool OnReady() = 0;
+
+private:
+    /// @private
+    static bool StartProcess();
 };
 
 #endif

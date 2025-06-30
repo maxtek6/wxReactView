@@ -43,8 +43,6 @@ public:
 };
 #endif
 
-#include <iostream>
-
 static wxString normalizePath(const wxString &path)
 {
     wxString normalizedPath = path;
@@ -126,6 +124,19 @@ wxSharedPtr<wxReactArchive> wxReactArchive::CreateHyperpageArchive(const wxStrin
     return wxSharedPtr<wxReactArchive>(new HyperpageArchive(dbPath));
 }
 
+class wxReactHandler : public wxWebViewHandler
+{
+public:
+    wxReactHandler(const wxSharedPtr<wxReactArchive> &archive);
+    virtual ~wxReactHandler() = default;
+    void StartRequest(const wxWebViewHandlerRequest &request,
+                      wxSharedPtr<wxWebViewHandlerResponse> response) override final;
+    void RegisterEndpoint(const wxString &endpoint, const wxRequestHandler &handler);
+private:
+    wxSharedPtr<wxReactArchive> m_archive;
+    std::unordered_map<wxString, wxRequestHandler> m_requestHandlers;
+};
+
 wxReactHandler::wxReactHandler(const wxSharedPtr<wxReactArchive> &archive)
     : wxWebViewHandler("https"), m_archive(archive)
 {
@@ -170,7 +181,7 @@ void wxReactHandler::StartRequest(const wxWebViewHandlerRequest &request,
 void wxReactHandler::RegisterEndpoint(const wxString &endpoint, const wxRequestHandler &handler)
 {
     wxString key("/api" + endpoint);
-    m_requestHandlers[endpoint] = handler;
+    m_requestHandlers[key] = handler;
 }
 
 bool wxReactApp::StartProcess()
@@ -191,41 +202,35 @@ bool wxReactApp::OnInit()
     return StartProcess() && OnReady();
 }
 
-wxReactView::wxReactView(wxWindow *parent, wxWindowID id, const wxPoint &pos, const wxSize &size, long style, const wxString &name) : m_ready(false)
+wxReactView::wxReactView(const wxSharedPtr<wxReactArchive>& archive, const wxString &indexPage)
+    : m_archive(archive), m_indexPage(indexPage)
+{
+    m_handler = wxSharedPtr<wxWebViewHandler>(new wxReactHandler(m_archive));
+}
+
+void wxReactView::BindWebView(wxWebView *webView)
 {
 #ifdef __WXMSW__
-    const wxString backend(wxWebViewBackendEdge);
-#else
-    const wxString backend(wxWebViewBackendChromium);
-#endif
-    m_webView.reset(wxWebView::New(parent, id, "", pos, size, backend, style, name));
-}
-
-void wxReactView::Initialize(wxReactHandler *handler, const std::function<void(wxWebView*)>& onCreate, const wxString &indexPage)
-{
-    m_handler = wxSharedPtr<wxWebViewHandler>(handler);
-    m_indexPage = indexPage;
-    m_webView->Bind(
-        wxEVT_WEBVIEW_CREATED,
-        [&](wxWebViewEvent &event)
+    // for some reason, Edge needs to catch this event to pass to StartRequest
+    webView->Bind(wxEVT_WEBVIEW_NAVIGATING, [&](wxWebViewEvent &event) {
+        const wxString url = event.GetURL();
+        if (!url.StartsWith("https://wxreactview.ipc"))
         {
-            m_webView->RegisterHandler(m_handler);
-            m_webView->LoadURL(wxString::Format("https://wxreactview.ipc/%s", m_indexPage));
-            m_ready = true;
-            m_readyCondition.notify_all();
-            if (onCreate)
-            {
-                onCreate(m_webView.get());
-            }
-        });
+            event.Skip();
+        }
+    });
+#endif
+    webView->Bind(wxEVT_WEBVIEW_CREATED, [&](wxWebViewEvent &event) {
+        wxWebView *object = reinterpret_cast<wxWebView*>(event.GetEventObject());
+        object->RegisterHandler(m_handler);
+        object->LoadURL("https:" + m_indexPage);
+    });
 }
 
-wxWebView* wxReactView::GetWebView() const
+void wxReactView::RegisterEndpoint(const wxString &endpoint, const wxRequestHandler &handler)
 {
-    std::shared_lock<std::shared_timed_mutex> lock(m_mutex);
-    if (!m_ready)
+    if (m_handler)
     {
-        m_readyCondition.wait(lock, [this] { return m_ready; });
+        static_cast<wxReactHandler*>(m_handler.get())->RegisterEndpoint(endpoint, handler);
     }
-    return m_webView.get();
 }

@@ -31,4 +31,33 @@ commonly used web technology and a feature-rich C++ desktop framework.
 
 ## Usage
 
-The recommended toolchain for wxReactView is to use React + Vite.
+The recommended toolchain for wxReactView is to use React + Vite. To
+add a wxReactView app to a CMake project, the following function can 
+be used:
+
+```cmake
+wxreactview_add_executable(<target>
+    FRONTEND <nodejs-source-directory>
+    SOURCES <source-files>
+)
+```
+
+To integrate with the C++ code, use the `wxReactApp` class:
+
+```c++
+class ExampleApp : public wxReactApp
+{
+public:
+    virtual bool OnReady() override
+    {
+        // this is similar to the OnInit() function provided by wxApp
+    }
+};
+
+wxIMPLEMENT_APP(ExampleApp);
+```
+
+`wxReactApp` is an extension of `wxApp` that handles platform specific 
+initialization for the different WebView backends.
+
+
