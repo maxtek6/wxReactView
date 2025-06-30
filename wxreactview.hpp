@@ -27,9 +27,6 @@
 #include <wx/filename.h>
 #include <wx/webview.h>
 
-#include <condition_variable>
-#include <shared_mutex>
-
 using wxRequestHandler = std::function<void(const wxWebViewHandlerRequest &, wxSharedPtr<wxWebViewHandlerResponse>)>;
 
 class wxReactContent
@@ -47,17 +44,19 @@ public:
     virtual wxSharedPtr<wxReactContent> LoadContent(const wxString &path) = 0;
 };
 
-class wxReactHandler : public wxWebViewHandler
+class wxReactView
 {
 public:
-    wxReactHandler(const wxSharedPtr<wxReactArchive> &archive);
-    virtual ~wxReactHandler() = default;
-    void StartRequest(const wxWebViewHandlerRequest &request,
-                      wxSharedPtr<wxWebViewHandlerResponse> response) override final;
+    wxReactView(const wxSharedPtr<wxReactArchive>& archive, const wxString &indexPage = "index.html");
+
+    void BindWebView(wxWebView *webView);
+
     void RegisterEndpoint(const wxString &endpoint, const wxRequestHandler &handler);
+
 private:
     wxSharedPtr<wxReactArchive> m_archive;
-    std::unordered_map<wxString, wxRequestHandler> m_requestHandlers;
+    wxString m_indexPage;
+    wxSharedPtr<wxWebViewHandler> m_handler;
 };
 
 class wxReactApp : public wxApp
@@ -68,31 +67,6 @@ public:
 
 private:
     static bool StartProcess();
-};
-
-class wxReactView
-{
-public:
-    wxReactView(wxWindow * parent, wxWindowID id,
-                 const wxPoint &pos = wxDefaultPosition,
-                 const wxSize &size = wxDefaultSize,
-                 long style = 0,
-                 const wxString &name = wxASCII_STR(wxWebViewNameStr));
-
-    void Initialize(
-        wxReactHandler *handler, 
-        const std::function<void(wxWebView*)>& onCreate = std::function<void(wxWebView*)>(),
-        const wxString &indexPage = "index.html");
-
-    wxWebView* GetWebView() const;
-
-private:
-    mutable bool m_ready;
-    mutable std::shared_timed_mutex m_mutex;
-    mutable std::condition_variable_any m_readyCondition;
-    std::unique_ptr<wxWebView> m_webView;
-    wxString m_indexPage;
-    wxSharedPtr<wxWebViewHandler> m_handler;
 };
 
 #endif

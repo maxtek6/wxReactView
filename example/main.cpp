@@ -2,6 +2,7 @@
 
 #include <wx/stdpaths.h>
 
+
 static wxString GetArchivePath()
 {
     // Get the path to the executable and append the archive name.
@@ -16,14 +17,24 @@ public:
     {
         // Initialize the wxReactView with a sample Hyperpage archive.
         auto archive = wxReactArchive::CreateHyperpageArchive(GetArchivePath());
-        
+        m_reactView.reset(new wxReactView(archive));
+
         // Create the main application frame and set its size.
         m_appFrame = std::make_unique<wxFrame>(nullptr, wxID_ANY, "wxReact Example");
         m_appFrame->SetSize(wxSize(800, 600));
         
-        // Create the wxReactView and initialize a handler.
-        m_reactView = std::make_unique<wxReactView>(m_appFrame.get(), wxID_ANY);
-        m_reactView->Initialize(new wxReactHandler(archive));
+        // Create the wxWebView and bind it.
+        wxWebView *webView = wxWebView::New(m_appFrame.get(), wxID_ANY, "",
+                                           wxDefaultPosition, wxDefaultSize,
+                                           wxWebViewBackendEdge);
+        m_reactView->BindWebView(webView);
+
+        m_reactView->RegisterEndpoint("/EchoMessage", [&](const wxWebViewHandlerRequest &request, wxSharedPtr<wxWebViewHandlerResponse> response) {
+            // Example endpoint handler that returns a simple JSON response.
+            wxMessageBox(wxString::Format("Posted Message: %s", request.GetDataString().c_str()), "Message Received", wxOK | wxICON_INFORMATION, m_appFrame.get());
+            response->SetStatus(200);
+            response->Finish("");
+        });
 
         // Display the wxReactView in the main frame.
         m_appFrame->Show(true);
