@@ -34,12 +34,22 @@ FetchContent_MakeAvailable(hyperpage)
 
 add_library(wxreactview STATIC ${CMAKE_CURRENT_SOURCE_DIR}/wxreactview.cpp)
 if(WIN32)
-    target_include_directories(wxreactview PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} "${WEBVIEW2_PACKAGE_DIR}/build/native/include")
+    target_include_directories(
+        wxreactview 
+        PUBLIC 
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+        $<INSTALL_INTERFACE:include> 
+        "$<BUILD_INTERFACE:${WEBVIEW2_PACKAGE_DIR}/build/native/include>")
     target_link_libraries(wxreactview PUBLIC wx::core wx::base wx::webview hyperpage)
 else()
     set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CEF_ROOT}/cmake)
     find_package(CEF REQUIRED)
-    target_include_directories(wxreactview PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${CEF_ROOT})
+    target_include_directories(
+        wxreactview 
+        PUBLIC 
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+        $<INSTALL_INTERFACE:include> 
+        ${CEF_ROOT})
     target_link_directories(wxreactview PUBLIC ${CEF_ROOT}/Release)
     target_link_libraries(wxreactview PUBLIC wx::core wx::base wx::webview hyperpage ${CEF_STANDARD_LIBS})
 endif()
@@ -96,3 +106,18 @@ endfunction()
 if(WXREACTVIEW_EXAMPLE)
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/example)
 endif()
+
+install (TARGETS wxreactview
+    EXPORT wxreactview-targets
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+)
+
+install (EXPORT wxreactview-targets
+    FILE wxreactview-targets.cmake
+    NAMESPACE wxreactview::
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/wxreactview
+)
+
