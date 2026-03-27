@@ -1,3 +1,8 @@
+# DISCLAIMER
+
+This project is mostly for learning purposes and will likely be archived 
+soon. For a cleaner and better solution, see [WebFrame](https://github.com/maxtek6/WebFrame).
+
 # wxReactView
 
 wxWidgets component for running React apps in WebView
